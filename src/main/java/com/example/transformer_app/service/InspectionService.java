@@ -106,6 +106,38 @@ public class InspectionService {
         return restTemplate.exchange(dbUrl, HttpMethod.PUT, requestEntity, String.class);
     }
 
+    public ResponseEntity<String> updateInspectionRefImage(Long iid, MultipartFile refImage, Double threshold) throws IOException {
+        Map<String, Object> existingInspection = getInspectionById(iid);
+        if (existingInspection == null) {
+            throw new RuntimeException("Inspection with IID " + iid + " not found");
+        }
+
+        String imageUrl = "";
+        List<Detection> detections = Collections.emptyList();
+
+        // Validate threshold: must be between 0 and 1, else use default
+        double usedThreshold = (threshold != null && threshold >= 0.0 && threshold <= 1.0) ? threshold : lambdaThreshold;
+
+        if (refImage != null && !refImage.isEmpty()) {
+            ImageAnalysisResult result = uploadImageAndAnalyze(refImage, usedThreshold);
+            imageUrl = result.getImageUrl();
+            detections = result.getDetections();
+        }
+
+        HttpHeaders dbHeaders = getHeaders();
+        dbHeaders.setContentType(MediaType.APPLICATION_JSON);
+        dbHeaders.set("Prefer", "return=representation");
+
+        Map<String, Object> updatedBody = new HashMap<>(existingInspection);
+        updatedBody.put("refImage", imageUrl);
+        updatedBody.put("anomalies", detections);
+
+        String dbUrl = supabaseUrl + "/rest/v1/inspections?iid=eq." + iid;
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(updatedBody, dbHeaders);
+
+        return restTemplate.exchange(dbUrl, HttpMethod.PUT, requestEntity, String.class);
+    }
+
     private Map<String, Object> getInspectionById(Long iid) throws IOException {
         String url = supabaseUrl + "/rest/v1/inspections?iid=eq." + iid + "&select=*&limit=1";
         HttpHeaders headers = getHeaders();
@@ -182,6 +214,47 @@ public class InspectionService {
             detections = Collections.emptyList();
         }
 
+        return new ImageAnalysisResult(imageUrl, detections);
+    }
+
+    // Overloaded method to support threshold
+    public ImageAnalysisResult uploadImageAndAnalyze(MultipartFile file, double threshold) throws IOException {
+        String imageUrl = "";
+        List<Detection> detections = Collections.emptyList();
+
+        if (file == null || file.isEmpty()) {
+            return new ImageAnalysisResult(imageUrl, detections);
+        }
+
+        // 1) Keep existing upload flow
+        imageUrl = uploadImage(file);
+
+        // 2) Prepare Lambda payload
+        String imgBase64 = Base64.getEncoder().encodeToString(file.getBytes());
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("image", imgBase64);
+        payload.put("threshold", threshold);
+        payload.put("iou_threshold", lambdaIouThreshold);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+        // 3) Invoke Lambda
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(lambdaUrl, request, String.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                System.out.println("Lambda response: " + response.getBody()); // Print the raw response
+                Map<String, Object> result = objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {});
+                Object detectionsObj = result.get("detections");
+                if (detectionsObj != null) {
+                    String detectionsJson = objectMapper.writeValueAsString(detectionsObj);
+                    detections = objectMapper.readValue(detectionsJson, new TypeReference<List<Detection>>() {});
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Error during Lambda analysis: " + ex.getMessage());
+        }
         return new ImageAnalysisResult(imageUrl, detections);
     }
 

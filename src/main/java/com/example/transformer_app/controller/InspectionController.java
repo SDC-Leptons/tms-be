@@ -91,10 +91,11 @@ public class InspectionController {
     @PostMapping("/{iid}/refImage")
     public ResponseEntity<String> updateRefImage(
             @PathVariable Long iid,
-            @RequestParam("refImage") MultipartFile refImage
+            @RequestParam("refImage") MultipartFile refImage,
+            @RequestParam(value = "threshold", required = false) Double threshold
     ) {
         try {
-            return inspectionService.updateInspectionRefImage(iid, refImage);
+            return inspectionService.updateInspectionRefImage(iid, refImage, threshold);
         } catch (RuntimeException e) {
             // Handle case where inspection is not found
             if (e.getMessage().contains("not found")) {
