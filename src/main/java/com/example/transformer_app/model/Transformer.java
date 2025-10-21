@@ -12,6 +12,8 @@ public class Transformer {
     private String poleNumber;
     private String region;
     private String type;
+    private String locationDetails;
+    private Integer capacity;  // Changed from Double to Integer to match database bigint type
     private String baselineImage; // Base64 string
 
     // Getters & Setters
@@ -29,6 +31,12 @@ public class Transformer {
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public String getLocationDetails() { return locationDetails; }
+    public void setLocationDetails(String locationDetails) { this.locationDetails = locationDetails; }
+
+    public Integer getCapacity() { return capacity; }
+    public void setCapacity(Integer capacity) { this.capacity = capacity; }
 
     public String getBaselineImage() { return baselineImage; }
     public void setBaselineImage(String baselineImage) { this.baselineImage = baselineImage; }

@@ -73,18 +73,26 @@ public class InspectionController {
 
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<String> createInspection(
-            @RequestParam("transformerNumber") String transformerNumber,
-            @RequestParam("inspectionNumber") String inspectionNumber,
+            @RequestParam(value = "transformerNumber", required = false) String transformerNumber,
+            @RequestParam(value = "inspectionNumber", required = false) String inspectionNumber,
             @RequestParam("inspectionDate") String inspectionDate,
             @RequestParam("maintainanceDate") String maintainanceDate,
             @RequestParam("status") String status,
             @RequestParam(value = "refImage", required = false) MultipartFile refImage
     ) {
         try {
+            // Validate presence of transformerNumber and return a clear 400 if missing
+            if (transformerNumber == null || transformerNumber.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("{\"error\":\"Missing required parameter: transformerNumber\"}");
+            }
+
+            // Pass inspectionNumber to service (can be null, service will auto-generate)
             return inspectionService.createInspection(transformerNumber, inspectionNumber, inspectionDate, maintainanceDate, status, refImage);
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"Failed to upload image: " + e.getMessage() + "\"}");
         }
     }
 
@@ -99,12 +107,74 @@ public class InspectionController {
         } catch (RuntimeException e) {
             // Handle case where inspection is not found
             if (e.getMessage().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("{\"error\":\"" + e.getMessage() + "\"}");
             }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update image.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"Failed to update image: " + e.getMessage() + "\"}");
+        }
+    }
+
+    // New endpoints for anomalies CRUD
+    @GetMapping("/{iid}/anomalies")
+    public ResponseEntity<String> getAnomalies(@PathVariable Long iid) {
+        try {
+            return inspectionService.getAnomalies(iid);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"Failed to fetch anomalies: " + e.getMessage() + "\"}");
+        }
+    }
+
+    @PostMapping(path = "/{iid}/anomalies", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> addAnomaly(@PathVariable Long iid, @RequestBody Map<String, Object> anomaly) {
+        try {
+            return inspectionService.addAnomaly(iid, anomaly);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"Failed to add anomaly: " + e.getMessage() + "\"}");
+        }
+    }
+
+    @PutMapping(path = "/{iid}/anomalies/{anomalyId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> updateAnomaly(@PathVariable Long iid, @PathVariable String anomalyId, @RequestBody Map<String, Object> anomaly) {
+        try {
+            return inspectionService.updateAnomaly(iid, anomalyId, anomaly);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("{\"error\":\"" + e.getMessage() + "\"}");
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"Failed to update anomaly: " + e.getMessage() + "\"}");
+        }
+    }
+
+    @DeleteMapping("/{iid}/anomalies/{anomalyId}")
+    public ResponseEntity<String> deleteAnomaly(@PathVariable Long iid, @PathVariable String anomalyId) {
+        try {
+            return inspectionService.deleteAnomaly(iid, anomalyId);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("{\"error\":\"" + e.getMessage() + "\"}");
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"" + e.getMessage() + "\"}");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\":\"Failed to delete anomaly: " + e.getMessage() + "\"}");
         }
     }
 

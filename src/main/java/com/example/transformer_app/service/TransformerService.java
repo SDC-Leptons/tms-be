@@ -40,8 +40,15 @@ public class TransformerService {
             String poleNumber,
             String region,
             String type,
+            String locationDetails,
+            Double capacity,
             MultipartFile baselineImage
     ) throws IOException {
+        // If the caller didn't provide a transformer number, generate one server-side
+        if (transformerNumber == null || transformerNumber.trim().isEmpty()) {
+            transformerNumber = generateUniqueTransformerNumber();
+        }
+
         String imageUrl = "";
         // Only upload if an image is actually provided
         if (baselineImage != null && !baselineImage.isEmpty()) {
@@ -57,6 +64,15 @@ public class TransformerService {
         body.put("poleNumber", poleNumber);
         body.put("region", region);
         body.put("type", type);
+        body.put("locationDetails", locationDetails);
+
+        // Convert capacity to integer if not null (database expects bigint, not decimal)
+        if (capacity != null) {
+            body.put("capacity", capacity.intValue());
+        } else {
+            body.put("capacity", null);
+        }
+
         body.put("baselineImage", imageUrl);
 
         String dbUrl = supabaseUrl + "/rest/v1/transformers";
@@ -147,5 +163,40 @@ public class TransformerService {
         headers.set("apikey", supabaseApiKey);
         headers.set("Authorization", "Bearer " + supabaseApiKey);
         return headers;
+    }
+
+    /**
+     * Check whether a transformerNumber already exists in the Supabase table.
+     */
+    private boolean existsTransformerNumber(String transformerNumber) throws IOException {
+        String url = supabaseUrl + "/rest/v1/transformers?transformerNumber=eq." + transformerNumber + "&select=transformerNumber&limit=1";
+        HttpHeaders headers = getHeaders();
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+            List<Map<String, Object>> list = objectMapper.readValue(response.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+            return !list.isEmpty();
+        } catch (HttpClientErrorException.NotFound e) {
+            return false;
+        }
+    }
+
+    /**
+     * Generate a unique transformer number in the format T-XXXXXX (6 digits). It will check the DB and retry
+     * until a unique value is found or a safety limit is exceeded.
+     */
+    private String generateUniqueTransformerNumber() throws IOException {
+        String candidate;
+        int attempts = 0;
+        do {
+            int randomNumber = (int) (Math.random() * 1_000_000); // 0 .. 999999
+            candidate = String.format("T-%06d", randomNumber);
+            attempts++;
+            if (attempts > 10000) {
+                throw new RuntimeException("Unable to generate a unique transformer number after " + attempts + " attempts");
+            }
+        } while (existsTransformerNumber(candidate));
+
+        return candidate;
     }
 }
