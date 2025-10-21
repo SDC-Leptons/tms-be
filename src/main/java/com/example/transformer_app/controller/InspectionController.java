@@ -78,6 +78,7 @@ public class InspectionController {
             @RequestParam("inspectionDate") String inspectionDate,
             @RequestParam("maintainanceDate") String maintainanceDate,
             @RequestParam("status") String status,
+            @RequestParam(value = "inspector", required = false) String inspector,
             @RequestParam(value = "refImage", required = false) MultipartFile refImage
     ) {
         try {
@@ -87,8 +88,8 @@ public class InspectionController {
                         .body("{\"error\":\"Missing required parameter: transformerNumber\"}");
             }
 
-            // Pass inspectionNumber to service (can be null, service will auto-generate)
-            return inspectionService.createInspection(transformerNumber, inspectionNumber, inspectionDate, maintainanceDate, status, refImage);
+            // Pass inspectionNumber and inspector to service (can be null, service will auto-generate inspectionNumber)
+            return inspectionService.createInspection(transformerNumber, inspectionNumber, inspectionDate, maintainanceDate, status, inspector, refImage);
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

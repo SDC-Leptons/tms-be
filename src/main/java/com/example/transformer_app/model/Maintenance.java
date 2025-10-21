@@ -12,7 +12,7 @@ public class Maintenance {
     private Map<String, Object> electricalReadings;
     private String recommendedActions;
     private String additionalRemarks;
-    private Date timestamp;
+    private Date createdAt;
 
     // Constructors
     public Maintenance() {
@@ -20,7 +20,7 @@ public class Maintenance {
 
     public Maintenance(Long mid, String maintenanceNumber, String inspectionNumber, String inspectorName,
                        String status, Map<String, Object> electricalReadings, String recommendedActions,
-                       String additionalRemarks, Date timestamp) {
+                       String additionalRemarks, Date createdAt) {
         this.mid = mid;
         this.maintenanceNumber = maintenanceNumber;
         this.inspectionNumber = inspectionNumber;
@@ -29,7 +29,7 @@ public class Maintenance {
         this.electricalReadings = electricalReadings;
         this.recommendedActions = recommendedActions;
         this.additionalRemarks = additionalRemarks;
-        this.timestamp = timestamp;
+        this.createdAt = createdAt;
     }
 
     // Getters and Setters
@@ -97,12 +97,11 @@ public class Maintenance {
         this.additionalRemarks = additionalRemarks;
     }
 
-    public Date getTimestamp() {
-        return timestamp;
+    public Date getCreatedAt() {
+        return createdAt;
     }
 
-    public void setTimestamp(Date timestamp) {
-        this.timestamp = timestamp;
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }
-

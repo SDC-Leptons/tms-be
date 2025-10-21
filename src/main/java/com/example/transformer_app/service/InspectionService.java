@@ -52,6 +52,7 @@ public class InspectionService {
             String inspectionDate,
             String maintainanceDate,
             String status,
+            String inspector,
             MultipartFile refImage
     ) throws IOException {
         // If the caller didn't provide an inspection number, generate one server-side
@@ -90,6 +91,7 @@ public class InspectionService {
         body.put("inspectionDate", inspectionDate);
         body.put("maintainanceDate", maintainanceDate);
         body.put("status", status);
+        body.put("inspector", inspector);
         body.put("refImage", imageUrl);
         body.put("anomalies", detections);
         body.put("anomaliesLog", anomaliesLog);

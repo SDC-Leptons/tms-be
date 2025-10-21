@@ -3,6 +3,7 @@ package com.example.transformer_app.controller;
 import com.example.transformer_app.service.MaintenanceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +16,6 @@ import java.util.Map;
 public class MaintenanceController {
 
     private final MaintenanceService maintenanceService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public MaintenanceController(MaintenanceService maintenanceService) {
@@ -53,7 +53,10 @@ public class MaintenanceController {
                     additionalRemarks
             );
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+            e.printStackTrace();
+            System.err.println("Error creating maintenance: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         }
     }
 
@@ -66,7 +69,10 @@ public class MaintenanceController {
         try {
             return maintenanceService.getAllMaintenance();
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+            e.printStackTrace();
+            System.err.println("Error fetching maintenance records: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         }
     }
 
@@ -79,7 +85,10 @@ public class MaintenanceController {
         try {
             return maintenanceService.getMaintenanceById(mid);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+            e.printStackTrace();
+            System.err.println("Error fetching maintenance by ID: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         }
     }
 
@@ -92,7 +101,10 @@ public class MaintenanceController {
         try {
             return maintenanceService.getMaintenanceByInspectionNumber(inspectionNumber);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+            e.printStackTrace();
+            System.err.println("Error fetching maintenance by inspection number: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         }
     }
 
@@ -125,7 +137,10 @@ public class MaintenanceController {
                     additionalRemarks
             );
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+            e.printStackTrace();
+            System.err.println("Error updating maintenance: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         }
     }
 
@@ -138,8 +153,10 @@ public class MaintenanceController {
         try {
             return maintenanceService.deleteMaintenance(mid);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("{\"error\": \"" + e.getMessage() + "\"}");
+            e.printStackTrace();
+            System.err.println("Error deleting maintenance: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("{\"error\": \"" + e.getMessage() + "\"}");
         }
     }
 }
-

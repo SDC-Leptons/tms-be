@@ -53,7 +53,7 @@ public class MaintenanceService {
         body.put("electricalReadings", electricalReadings != null ? electricalReadings : new HashMap<>());
         body.put("recommendedActions", recommendedActions);
         body.put("additionalRemarks", additionalRemarks);
-        body.put("timestamp", new Date().toInstant().toString());
+        // Don't set created_at - let Supabase handle it with DEFAULT
 
         String url = supabaseUrl + "/rest/v1/maintenance";
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
@@ -63,7 +63,7 @@ public class MaintenanceService {
 
     // Get all maintenance records
     public ResponseEntity<String> getAllMaintenance() {
-        String url = supabaseUrl + "/rest/v1/maintenance?select=*&order=timestamp.desc";
+        String url = supabaseUrl + "/rest/v1/maintenance?select=*&order=created_at.desc";
         HttpHeaders headers = getHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -85,7 +85,7 @@ public class MaintenanceService {
 
     // Get maintenance records by inspection number
     public ResponseEntity<String> getMaintenanceByInspectionNumber(String inspectionNumber) {
-        String url = supabaseUrl + "/rest/v1/maintenance?inspectionNumber=eq." + inspectionNumber + "&select=*&order=timestamp.desc";
+        String url = supabaseUrl + "/rest/v1/maintenance?inspectionNumber=eq." + inspectionNumber + "&select=*&order=created_at.desc";
         HttpHeaders headers = getHeaders();
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -190,4 +190,3 @@ public class MaintenanceService {
         return headers;
     }
 }
-

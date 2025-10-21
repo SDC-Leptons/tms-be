@@ -11,6 +11,7 @@ public class Inspection {
     private String inspectionDate;
     private String maintainanceDate;
     private String status;
+    private String inspector;
     private String refImage; // URL to image in Supabase Storage
     private List<Detection> anomalies; // List of detected anomalies
     private List<Map<String, Object>> anomaliesLog; // Log of anomaly detections with metadata
@@ -33,6 +34,9 @@ public class Inspection {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getInspector() { return inspector; }
+    public void setInspector(String inspector) { this.inspector = inspector; }
 
     public String getRefImage() { return refImage; }
     public void setRefImage(String refImage) { this.refImage = refImage; }
